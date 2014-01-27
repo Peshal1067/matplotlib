@@ -852,7 +852,8 @@ class Normalize(object):
     the ``[0.0, 1.0]`` interval.
 
     """
-    def __init__(self, vmin=None, vmax=None, clip=False):
+    def __init__(self, vmin=None, vmax=None, vcenter=None,
+                 clip=False, forcesymmetry=False):
         """
         If *vmin* or *vmax* is not given, they are taken from the input's
         minimum and maximum value respectively.  If *clip* is *True* and
