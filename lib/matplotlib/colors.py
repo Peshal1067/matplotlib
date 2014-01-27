@@ -869,8 +869,10 @@ class Normalize(object):
         *clip* = *False*.
         """
         self.vmin = vmin
+        self.vcenter = vcenter
         self.vmax = vmax
         self.clip = clip
+        self.forcesymmetry = forcesymmetry
 
     @staticmethod
     def process_value(value):
@@ -904,6 +906,22 @@ class Normalize(object):
             result = ma.array([value]).astype(np.float)
         return result, is_scalar
 
+    def get_local_Vs(self):
+        if self.vcenter is None:
+            vcenter = 0.5 * (vmin + vmax)
+        else:
+            vcenter = self.vcenter
+
+        if self.forcesymmetry:
+            diff = np.max([self.vcenter - self.vmin, self.vmax - self.vcenter])
+            vmin = self.vcenter - diff
+            vmax = self.vcenter + diff
+        else:
+            vmin = self.vmin
+            vmax = self.vmax
+
+        return vmin, vcenter, vmax
+
     def __call__(self, value, clip=None):
         if clip is None:
             clip = self.clip
@@ -911,23 +929,36 @@ class Normalize(object):
         result, is_scalar = self.process_value(value)
 
         self.autoscale_None(result)
-        vmin, vmax = self.vmin, self.vmax
+        vmin, vcenter, vmax = self.get_local_Vs()
         if vmin == vmax:
             result.fill(0)   # Or should it be all masked?  Or 0.5?
         elif vmin > vmax:
-            raise ValueError("minvalue must be less than or equal to maxvalue")
+            raise ValueError("vmin must be less than or equal to vmax")
+        elif vcenter < vmin or vcenter > vmax:
+            raise ValueError("vcenter must be between or equal to vmin, vmax")
         else:
             vmin = float(vmin)
             vmax = float(vmax)
+            vcenter= float(vcenter)
             if clip:
                 mask = ma.getmask(result)
                 result = ma.array(np.clip(result.filled(vmax), vmin, vmax),
                                   mask=mask)
-            # ma division is very slow; we can take a shortcut
-            resdat = result.data
-            resdat -= vmin
-            resdat /= (vmax - vmin)
-            result = np.ma.array(resdat, mask=result.mask, copy=False)
+
+            reshi = ma.masked_less_equal(x, 0)
+            reslo = ma.masked_greater(x, 0)
+
+            # scale everything above vcenter
+            resdathi = reshi.data
+            resdathi -= vcenter
+            resdathi /= (vmax - vcenter)
+
+            # scale everything below vcenter
+            resdatlo = reslo.data
+            resdatlo -= vmin
+            resdatlo /= (vcenter - vmin)
+
+            result = ma.array(np.hstack([resdatlo[reshi.mask], resdathi[reslo.mask]]), mask=result.mask, copy=False)
         if is_scalar:
             result = result[0]
         return result
