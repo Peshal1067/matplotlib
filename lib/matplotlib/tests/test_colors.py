@@ -55,11 +55,19 @@ def test_LogNorm():
     assert_array_equal(ln([1, 6]), [0, 1.0])
 
 
-def test_Normalize():
+def test_Normalize_inverse():
     norm = mcolors.Normalize()
     vals = np.arange(-10, 10, 1, dtype=np.float)
     _inverse_tester(norm, vals)
+
+def test_Normalize_scalar():
+    norm = mcolors.Normalize()
+    vals = np.arange(-10, 10, 1, dtype=np.float)
     _scalar_tester(norm, vals)
+
+def test_Normalize_mask():
+    norm = mcolors.Normalize()
+    vals = np.arange(-10, 10, 1, dtype=np.float)
     _mask_tester(norm, vals)
 
 
