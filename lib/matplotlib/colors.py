@@ -946,8 +946,8 @@ class Normalize(object):
                 result = ma.array(np.clip(result.filled(vmax), vmin, vmax),
                                   mask=mask)
 
-            reshi = ma.masked_less_equal(x, 0)
-            reslo = ma.masked_greater(x, 0)
+            reshi = ma.masked_less_equal(result, vcenter)
+            reslo = ma.masked_greater(result, vcenter)
 
             # scale everything above vcenter
             resdathi = reshi.data
@@ -959,7 +959,14 @@ class Normalize(object):
             resdatlo -= vmin
             resdatlo /= (vcenter - vmin)
 
-            result = ma.array(np.hstack([resdatlo[reshi.mask], resdathi[reslo.mask]]), mask=result.mask, copy=False)
+            result = ma.array(
+                np.hstack([
+                    resdatlo[reshi.mask],
+                    resdathi[reslo.mask]
+                    ]),
+                mask=result.mask,
+                copy=False
+            )
         if is_scalar:
             result = result[0]
         return result
