@@ -930,7 +930,8 @@ class Normalize(object):
         result, is_scalar = self.process_value(value)
 
         self.autoscale_None(result)
-        vmin, vcenter, vmax = self.get_local_Vs()
+        #vmin, vcenter, vmax = self.get_local_Vs()
+        vmin, vcenter, vmax = self.vmin, self.vcenter, self.vmax
         if vmin == vmax:
             result.fill(0)   # Or should it be all masked?  Or 0.5?
         elif vmin > vmax:
@@ -996,6 +997,8 @@ class Normalize(object):
             self.vmin = ma.min(A)
         if self.vmax is None and np.size(A) > 0:
             self.vmax = ma.max(A)
+        if self.vcenter is None and np.size(A) > 0:
+            self.vcenter = 0.5 * (self.vmin + self.vmax)
 
     def scaled(self):
         'return true if vmin and vmax set'
