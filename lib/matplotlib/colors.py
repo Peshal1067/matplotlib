@@ -908,7 +908,7 @@ class Normalize(object):
 
     def get_local_Vs(self):
         if self.vcenter is None:
-            vcenter = 0.5 * (vmin + vmax)
+            vcenter = 0.5 * (self.vmin + self.vmax)
         else:
             vcenter = self.vcenter
 
