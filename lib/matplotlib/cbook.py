@@ -1817,7 +1817,8 @@ def delete_masked_points(*args):
 
 
 def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
-                  autorange=False):
+                  autorange=False, transform_in=None,
+                  transform_out=None):
     """
     Returns list of dictionaries of statistics used to draw a series
     of box and whisker plots. The `Returns` section enumerates the
@@ -1857,6 +1858,20 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         that the whisker ends are at the minimum and maximum of the
         data.
 
+    tranform_in, transform_out : callable, optional
+        Data tranformation functions that are applied before the
+        statistics are computed (``transform_in``) and then reverted
+        by applying ``transform_out`` directly to the statistics. Since
+        these functions will be applied to the original data and the
+        resulting statistics, they should behave equally well with
+        arrays and scalars.
+
+        For example, since the fences that determine the outliers are
+        computed arithmetically, the lower outliers are often within
+        ``Q1 - 0.5 * IQR`` for lognormally distributed data. Thus,
+        using ``np.log`` and ``np.exp`` as tranformations can more
+        faithfully respresent the distribution of such data.
+
     Returns
     -------
     bxpstats : list of dict
@@ -1893,7 +1908,7 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
 
     """
 
-    def _bootstrap_median(data, N=5000):
+    def _bootstrap_ci(data, N=5000):
         # determine 95% confidence intervals of the median
         M = len(data)
         percentiles = [2.5, 97.5]
@@ -1903,22 +1918,33 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         estimate = np.median(bsData, axis=1, overwrite_input=True)
 
         CI = np.percentile(estimate, percentiles)
-        return CI
+        return CI[0], CI[1]
 
-    def _compute_conf_interval(data, med, iqr, bootstrap):
+    def _normal_approx_ci(data, med, iqr):
+        N = len(data)
+        notch_min = med - 1.57 * iqr / np.sqrt(N)
+        notch_max = med + 1.57 * iqr / np.sqrt(N)
+
+        return notch_min, notch_max
+
+    def _compute_conf_interval(data, med, iqr, bootstrap=None):
         if bootstrap is not None:
             # Do a bootstrap estimate of notch locations.
             # get conf. intervals around median
-            CI = _bootstrap_median(data, N=bootstrap)
-            notch_min = CI[0]
-            notch_max = CI[1]
+            return _bootstrap_median(data, N=bootstrap)
         else:
+            return _normal_approx_ci(data, med, iqr)
 
-            N = len(data)
-            notch_min = med - 1.57 * iqr / np.sqrt(N)
-            notch_max = med + 1.57 * iqr / np.sqrt(N)
+    def _mutate_values_with(fxn, dictobj):
+        for key, value in dictobj.items():
+            dictobj[key] = fxn(value)
 
-        return notch_min, notch_max
+    # no-op transformations (default)
+    if transform_in is None:
+        transform_in = lambda x: x
+
+    if transform_out is None:
+        transform_out = lambda x: x
 
     # output is a list of dicts
     bxpstats = []
@@ -1933,7 +1959,10 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         raise ValueError("Dimensions of labels and X must be compatible")
 
     input_whis = whis
-    for ii, (x, label) in enumerate(zip(X, labels), start=0):
+    for ii, (_x, label) in enumerate(zip(X, labels), start=0):
+
+        # apply the initial transformation
+        x = transform_in(_x)
 
         # empty dict
         stats = {}
@@ -2017,6 +2046,8 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
 
         # add in the remaining stats
         stats['q1'], stats['med'], stats['q3'] = q1, med, q3
+
+        _mutate_values_with(transform_out, stats)
 
 
     return bxpstats

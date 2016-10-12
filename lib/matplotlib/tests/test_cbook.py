@@ -125,6 +125,9 @@ def test_allequal():
 
 
 class Test_boxplot_stats(object):
+    def compute_stats(self, **kwargs):
+        return cbook.boxplot_stats(self.data, **kwargs)
+
     def setup(self):
         np.random.seed(937)
         self.nrows = 37
@@ -136,7 +139,7 @@ class Test_boxplot_stats(object):
             'cilo', 'cihi', 'whislo', 'whishi',
             'fliers', 'label'
         ])
-        self.std_results = cbook.boxplot_stats(self.data)
+        self.std_results = self.compute_stats()
 
         self.known_nonbootstrapped_res = {
             'cihi': 6.8161283264444847,
@@ -172,7 +175,6 @@ class Test_boxplot_stats(object):
         self.known_res_range = {
             'whislo': 0.042143774965502923,
             'whishi': 92.554670752188699
-
         }
 
     def test_form_main_list(self):
@@ -202,7 +204,7 @@ class Test_boxplot_stats(object):
             )
 
     def test_results_bootstrapped(self):
-        results = cbook.boxplot_stats(self.data, bootstrap=10000)
+        results = self.compute_stats(bootstrap=10000)
         res = results[0]
         for key in list(self.known_bootstrapped_ci.keys()):
             assert_approx_equal(
@@ -211,7 +213,7 @@ class Test_boxplot_stats(object):
             )
 
     def test_results_whiskers_float(self):
-        results = cbook.boxplot_stats(self.data, whis=3)
+        results = self.compute_stats(whis=3)
         res = results[0]
         for key in list(self.known_whis3_res.keys()):
             if key != 'fliers':
@@ -225,7 +227,7 @@ class Test_boxplot_stats(object):
             )
 
     def test_results_whiskers_range(self):
-        results = cbook.boxplot_stats(self.data, whis='range')
+        results = self.compute_stats(whis='range')
         res = results[0]
         for key in list(self.known_res_range.keys()):
             if key != 'fliers':
@@ -239,7 +241,7 @@ class Test_boxplot_stats(object):
             )
 
     def test_results_whiskers_percentiles(self):
-        results = cbook.boxplot_stats(self.data, whis=[5, 95])
+        results = self.compute_stats(whis=[5, 95])
         res = results[0]
         for key in list(self.known_res_percentiles.keys()):
             if key != 'fliers':
@@ -254,7 +256,7 @@ class Test_boxplot_stats(object):
 
     def test_results_withlabels(self):
         labels = ['Test1', 2, 'ardvark', 4]
-        results = cbook.boxplot_stats(self.data, labels=labels)
+        results = self.compute_stats(labels=labels)
         res = results[0]
         for lab, res in zip(labels, results):
             assert_equal(res['label'], lab)
@@ -276,8 +278,8 @@ class Test_boxplot_stats(object):
     def test_boxplot_stats_autorange_false(self):
         x = np.zeros(shape=140)
         x = np.hstack([-25, x, 25])
-        bstats_false = cbook.boxplot_stats(x, autorange=False)
-        bstats_true = cbook.boxplot_stats(x, autorange=True)
+        bstats_false = self.compute_stats(autorange=False)
+        bstats_true = self.compute_stats(autorange=True)
 
         assert_equal(bstats_false[0]['whislo'], 0)
         assert_equal(bstats_false[0]['whishi'], 0)
@@ -286,6 +288,12 @@ class Test_boxplot_stats(object):
         assert_equal(bstats_true[0]['whislo'], -25)
         assert_equal(bstats_true[0]['whishi'], 25)
         assert_array_almost_equal(bstats_true[0]['fliers'], [])
+
+
+def Test_boxplot_stats_with_transforms(Test_boxplot_stats):
+    def compute_stats(self, **kwargs):
+        return cbook.boxplot_stats(self.data, transform_in=np.log,
+                                   transform_out=np.exp, **kwargs)
 
 
 class Test_callback_registry(object):
