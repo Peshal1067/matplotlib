@@ -290,7 +290,7 @@ class Test_boxplot_stats(object):
         assert_array_almost_equal(bstats_true[0]['fliers'], [])
 
 
-def Test_boxplot_stats_with_transforms(Test_boxplot_stats):
+class Test_boxplot_stats_with_transforms(Test_boxplot_stats):
     def compute_stats(self, **kwargs):
         return cbook.boxplot_stats(self.data, transform_in=np.log,
                                    transform_out=np.exp, **kwargs)
