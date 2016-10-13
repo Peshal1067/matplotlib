@@ -1931,7 +1931,7 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         if bootstrap is not None:
             # Do a bootstrap estimate of notch locations.
             # get conf. intervals around median
-            return _bootstrap_median(data, N=bootstrap)
+            return _bootstrap_ci(data, N=bootstrap)
         else:
             return _normal_approx_ci(data, med, iqr)
 
