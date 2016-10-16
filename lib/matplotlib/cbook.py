@@ -1813,7 +1813,8 @@ def delete_masked_points(*args):
 
 
 def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
-                  autorange=False):
+                  autorange=False, transform_in=None,
+                  transform_out=None):
     """
     Returns list of dictionaries of statistics used to draw a series
     of box and whisker plots. The `Returns` section enumerates the
@@ -1852,6 +1853,20 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         75th percentiles are equal, ``whis`` is set to ``'range'`` such
         that the whisker ends are at the minimum and maximum of the
         data.
+
+    transform_in, transform_out : callable, optional
+        Data tranformation functions that are applied before the
+        statistics are computed (``transform_in``) and then reverted
+        by applying ``transform_out`` directly to the statistics. Since
+        these functions will be applied to the original data and the
+        resulting statistics, they should behave equally well with
+        arrays and scalars.
+
+        For example, since the fences that determine the outliers are
+        computed arithmetically, the lower outliers are often within
+        ``Q1 - 0.5 * IQR`` for lognormally distributed data. Thus,
+        using ``np.log`` and ``np.exp`` as tranformations can more
+        faithfully respresent the distribution of such data.
 
     Returns
     -------
@@ -1916,6 +1931,17 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
 
         return notch_min, notch_max
 
+    def _mutate_values_with(fxn, dictobj):
+        for key, value in dictobj.items():
+            dictobj[key] = fxn(value)
+
+    # handle unprovided transforms:
+    if not transform_in:
+        transform_in = lambda x: x
+
+    if not transform_out:
+        transform_out = lambda x: x
+
     # output is a list of dicts
     bxpstats = []
 
@@ -1929,7 +1955,7 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         raise ValueError("Dimensions of labels and X must be compatible")
 
     input_whis = whis
-    for ii, (x, label) in enumerate(zip(X, labels), start=0):
+    for ii, (_x, label) in enumerate(zip(X, labels), start=0):
 
         # empty dict
         stats = {}
@@ -1943,7 +1969,7 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
         bxpstats.append(stats)
 
         # if empty, bail
-        if len(x) == 0:
+        if len(_x) == 0:
             stats['fliers'] = np.array([])
             stats['mean'] = np.nan
             stats['med'] = np.nan
@@ -1957,7 +1983,7 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
             continue
 
         # up-convert to an array, just to be safe
-        x = np.asarray(x)
+        x = transform_in(np.asarray(_x))
 
         # arithmetic mean
         stats['mean'] = np.mean(x)
@@ -2013,6 +2039,8 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None,
 
         # add in the remaining stats
         stats['q1'], stats['med'], stats['q3'] = q1, med, q3
+
+        _mutate_values_with(transform_out, stats)
 
 
     return bxpstats
