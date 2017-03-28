@@ -3284,6 +3284,8 @@ or tuple of floats
                                        labels=labels, autorange=autorange)
         if notch is None:
             notch = rcParams['boxplot.notch']
+        else:
+            warnings.warn("'notch' will be renamed 'shownotches' in v2.3", mplDeprecation)
         if vert is None:
             vert = rcParams['boxplot.vertical']
         if patch_artist is None:
@@ -3333,6 +3335,11 @@ or tuple of floats
         # handle all of the `sym` related logic here so we only have to pass
         # on the flierprops dict.
         if sym is not None:
+            sym_msg = (
+                "The *sym* option is deprecated and will be removed in v2.2. "
+                "Use the `flierprops=dict(marker='{}')` instead"
+            )
+            warnings.warn(sym_msg.format(sym), mplDeprecation)
             # no-flier case, which should really be done with
             # 'showfliers=False' but none-the-less deal with it to keep back
             # compatibility
@@ -3358,8 +3365,14 @@ or tuple of floats
                     flierprops['markerfacecolor'] = color
                     flierprops['markeredgecolor'] = color
 
+        stat_dep_msg = (
+            "The `{}` parameter is deprecated and will be remoevd in "
+            "v2.2. In the future you will need to modify the output of "
+            "`matplotlib.cbook.boxplot_stats` and pass it to `Axes.bxp`."
+        )
         # replace medians if necessary:
         if usermedians is not None:
+            warnings.warn(stat_dep_msg.format('usermedians'), mplDeprecation)
             if (len(np.ravel(usermedians)) != len(bxpstats) or
                     np.shape(usermedians)[0] != len(bxpstats)):
                 medmsg = 'usermedians length not compatible with x'
@@ -3371,6 +3384,7 @@ or tuple of floats
                         stats['med'] = med
 
         if conf_intervals is not None:
+            warnings.warn(stat_dep_msg.format('conf_intervals'), mplDeprecation)
             if np.shape(conf_intervals)[0] != len(bxpstats):
                 err_mess = 'conf_intervals length not compatible with x'
                 raise ValueError(err_mess)
