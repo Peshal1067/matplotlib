@@ -1,13 +1,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
 
 import difflib
 import os
 
 from matplotlib import cbook
-from matplotlib.testing import setup
 
 
 # Check that the test directories exist

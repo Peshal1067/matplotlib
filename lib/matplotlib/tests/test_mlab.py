@@ -19,7 +19,6 @@ from matplotlib.testing.decorators import CleanupTestCase
 
 
 try:
-    from mpl_toolkits.natgrid import _natgrid
     HAS_NATGRID = True
 except ImportError:
     HAS_NATGRID = False

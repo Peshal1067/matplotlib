@@ -312,7 +312,6 @@ def test_docstring_addition():
     @_preprocess_data()
     def funcy(ax, *args, **kwargs):
         """Funcy does nothing"""
-        pass
 
     assert re.search(r".*All positional and all keyword arguments\.",
                      funcy.__doc__)
@@ -323,7 +322,6 @@ def test_docstring_addition():
     @_preprocess_data(replace_all_args=True, replace_names=[])
     def funcy(ax, x, y, z, bar=None):
         """Funcy does nothing"""
-        pass
 
     assert re.search(r".*All positional arguments\.",
                      funcy.__doc__)
@@ -335,7 +333,6 @@ def test_docstring_addition():
     @_preprocess_data(replace_all_args=True, replace_names=["bar"])
     def funcy(ax, x, y, z, bar=None):
         """Funcy does nothing"""
-        pass
 
     assert re.search(r".*All positional arguments\.", funcy.__doc__)
     assert re.search(r".*All arguments with the following names: 'bar'\.",
@@ -346,7 +343,6 @@ def test_docstring_addition():
     @_preprocess_data(replace_names=["x", "bar"])
     def funcy(ax, x, y, z, bar=None):
         """Funcy does nothing"""
-        pass
 
     # lists can print in any order, so test for both x,bar and bar,x
     assert re.search(r".*All arguments with the following names: '.*', '.*'\.",

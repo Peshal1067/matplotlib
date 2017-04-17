@@ -5,7 +5,6 @@ import pickle
 from weakref import ref
 import warnings
 
-import six
 
 from datetime import datetime
 
