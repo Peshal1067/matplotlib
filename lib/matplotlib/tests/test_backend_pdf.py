@@ -3,8 +3,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
-
 import io
 import os
 import tempfile
@@ -12,7 +10,8 @@ import tempfile
 import pytest
 
 import numpy as np
-from matplotlib import checkdep_tex, cm, rcParams
+import matplotlib
+from matplotlib import checkdep_tex, rcParams
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 from matplotlib.testing.determinism import (_determinism_source_date_epoch,
